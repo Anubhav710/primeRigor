@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { signupAction } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 
 // Zod Validation Schema for Sign Up
 const signupSchema = z
@@ -79,7 +80,6 @@ export default function SignupPage() {
 
       if (result.success) {
         toast.success(result.message, { id: "auth-toast" });
-        // Redirect user to home page immediately upon registration
         router.push("/");
         router.refresh();
       } else {
@@ -88,6 +88,27 @@ export default function SignupPage() {
     } catch (err: any) {
       setIsSubmitting(false);
       toast.error(err?.message || "An unexpected error occurred", { id: "auth-toast" });
+    }
+  };
+
+  // Google OAuth Login Handler
+  const handleGoogleLogin = async () => {
+    toast.loading("Connecting to Google...", { id: "auth-toast" });
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        toast.error(error.message, { id: "auth-toast" });
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Google OAuth sign in failed", { id: "auth-toast" });
     }
   };
 
@@ -222,13 +243,13 @@ export default function SignupPage() {
               <Separator text="OR" />
             </div>
 
-            {/* Sign up with Google Button */}
+            {/* Sign up with Google Button connected to Supabase OAuth */}
             <div>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => toast.info("Google OAuth sign-up initiated")}
-                className="w-full border-neutral-300 bg-white text-neutral-900 font-semibold hover:bg-neutral-50 h-11 text-xs sm:text-sm rounded-[4px] flex items-center justify-center gap-3 shadow-none"
+                onClick={handleGoogleLogin}
+                className="w-full border-neutral-300 bg-white text-neutral-900 font-semibold hover:bg-neutral-50 h-11 text-xs sm:text-sm rounded-[4px] flex items-center justify-center gap-3 shadow-none cursor-pointer"
               >
                 <FcGoogle className="w-5 h-5 shrink-0" />
                 <span>Sign up with Google</span>
