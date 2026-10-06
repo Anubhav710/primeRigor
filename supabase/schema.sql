@@ -2,7 +2,7 @@
 -- SUPABASE DATABASE SCHEMA & USER TABLE SETUP FOR LUMMI AUTHENTICATION
 -- =========================================================================
 
--- 1. Create custom `public.users` table
+-- 1. Create custom `public.users` table with UNIQUE email constraint
 CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
@@ -13,6 +13,19 @@ CREATE TABLE IF NOT EXISTS public.users (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   last_login TIMESTAMPTZ DEFAULT timezone('utc'::text, now())
 );
+
+-- Ensure explicit UNIQUE constraint and index on lowercased email address
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'users_email_key'
+  ) THEN
+    ALTER TABLE public.users ADD CONSTRAINT users_email_key UNIQUE (email);
+  END IF;
+END $$;
+
+-- Create case-insensitive UNIQUE index for email address lookup
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_unique_idx ON public.users (LOWER(email));
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -47,7 +60,11 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1)),
     COALESCE(NEW.raw_user_meta_data->>'avatar_url', '')
-  );
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = EXCLUDED.full_name,
+    updated_at = timezone('utc'::text, now());
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
