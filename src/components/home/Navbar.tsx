@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Menu, X, User } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, X, User, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
@@ -53,9 +53,10 @@ export function Navbar() {
           <a href="#solutions" className="hover:text-blue-600 transition-colors">
             Solutions
           </a>
-          <a href="#in-action" className="hover:text-blue-600 transition-colors">
-            In Action
-          </a>
+          <Link href="/admin/users" className="hover:text-blue-600 transition-colors flex items-center gap-1 text-blue-600 font-semibold">
+            <ShieldAlert className="w-4 h-4 text-blue-600" />
+            <span>Admin Panel</span>
+          </Link>
         </nav>
 
         {/* Auth & CTA Action Buttons */}
@@ -108,13 +109,13 @@ export function Navbar() {
           >
             Solutions
           </a>
-          <a
-            href="#in-action"
+          <Link
+            href="/admin/users"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="block text-sm font-medium text-slate-800 hover:text-blue-600 py-1"
+            className="block text-sm font-bold text-blue-600 py-1"
           >
-            In Action
-          </a>
+            Admin Panel
+          </Link>
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
             <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
               <Button variant="outline" className="w-full justify-center">
